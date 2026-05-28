@@ -14,7 +14,7 @@
       --cream:#fdf6e3;--text:#2c1a0e;--muted:#7a6040;
     }
     html,body{height:100%;font-family:'Lato',sans-serif;background:var(--dark);color:var(--cream);overflow:hidden}
-    body.open{overflow-y:auto;overflow-x:hidden}
+    html.open,body.open{height:auto;min-height:100%;overflow-y:auto;overflow-x:hidden}
 
     /* ══ SPLASH ══ */
     #splash{
@@ -694,6 +694,7 @@ function openInvitation(e) {
 
   // cancel star animation
   cancelAnimationFrame(raf);
+  playInvitationMusic();
 
   const splash=document.getElementById('splash');
   const content=document.getElementById('content');
@@ -705,14 +706,63 @@ function openInvitation(e) {
   setTimeout(()=>{
     splash.style.display='none';
     content.classList.add('visible');
+    document.documentElement.classList.add('open');
     document.body.classList.add('open');
     window.scrollTo(0,0);
     initHeroStars();
     setTimeout(launchConfetti,400);
     initScrollReveal();
-    playInvitationMusic();
+    setTimeout(startAutoScroll,1400);
   },1300);
 }
+
+let autoScrollFrame=null, autoScrollTimer=null;
+function startAutoScroll(){
+  if(autoScrollFrame) cancelAnimationFrame(autoScrollFrame);
+  if(autoScrollTimer) clearInterval(autoScrollTimer);
+
+  const speed=0.45;
+
+  function getScrollElement(){
+    const scrolling=document.scrollingElement;
+    if(scrolling && scrolling.scrollHeight>scrolling.clientHeight) return scrolling;
+    if(document.body.scrollHeight>document.body.clientHeight) return document.body;
+    return document.documentElement;
+  }
+
+  function getScrollTop(){
+    const scroller=getScrollElement();
+    return scroller.scrollTop || document.documentElement.scrollTop || document.body.scrollTop || window.scrollY || 0;
+  }
+
+  function getMaxScroll(){
+    const scroller=getScrollElement();
+    return scroller.scrollHeight-scroller.clientHeight-90;
+  }
+
+  function setScrollTop(value){
+    const scroller=getScrollElement();
+    scroller.scrollTop=value;
+    document.documentElement.scrollTop=value;
+    document.body.scrollTop=value;
+  }
+
+  function step(){
+    const current=getScrollTop();
+    const maxScroll=getMaxScroll();
+
+    if(current>=maxScroll){
+      clearInterval(autoScrollTimer);
+      autoScrollTimer=null;
+      return;
+    }
+
+    setScrollTop(current+speed);
+  }
+
+  autoScrollTimer=setInterval(step,16);
+}
+window.startAutoScroll=startAutoScroll;
 
 /* ════════════════════════════════════
    7. SCROLL REVEAL
